@@ -8,7 +8,7 @@ Every time a post is loaded, an [AJAX](https://en.wikipedia.org/wiki/Ajax_(progr
 
 ## How to use
 
-Just add a small snippet of code to your functions.php file
+Just add a small snippet of code to your 'functions.php' file
 ```php
 include_once('path/to/most-popular-posts.php');
 ```
