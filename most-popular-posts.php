@@ -20,6 +20,7 @@
 			 */
 			private $countKey = "view-count";
 
+		
 			/**
 			 * Post view slug
 			 * 
@@ -28,6 +29,7 @@
 			 */
 			private $countSlug = "view_count";
 
+		
 			/**
 			 * Constructor
 			 * 
@@ -60,7 +62,9 @@
 
 
 			/**
-			 * AJAX CALLBACK
+			 * AJAX callback to process data
+			 *
+			 * @since 1.0
 			 */
 			public function ajaxCallback()
 			{
@@ -81,21 +85,14 @@
 
 
 			/**
-			 * UPDATE VIEW COUNT
+			 * Update value or create the key
+			 *
+			 * @since 1.0
 			 */
 			public function updateViewCount()
 			{
-				$this->setViewCount($_POST['id']);
-
-				die($_POST['id']);
-			}
-
-
-			/**
-			 * SET POST VIEW COUNT
-			 */
-			private function setViewCount($postID)
-			{
+				$postID = absint($_POST['id']);
+				
 				$count = get_post_meta($postID, $this->countKey, true);
 				if ($count == ''):
 						$count = 1;
@@ -105,11 +102,15 @@
 						$count++;
 						update_post_meta($postID, $this->countKey, $count);
 				endif;
+
+				die($postID);
 			}
 
 
 			/**
-			 * HOOK INTO POST CONTENT
+			 * Hook into the_content to add necessary data
+			 *
+			 * @since 1.0
 			 */
 			public function updateContent($content)
 			{
@@ -120,13 +121,22 @@
 			}
 
 
-			// ADD NEW COLUMN
+			/**
+			 * Add new admin column
+			 *
+			 * @since 1.0
+			 */
 			public function viewCountColumnHead($defaults) {
 				$defaults[$this->countSlug] = __('Views');
 				return $defaults;
 			}
 
-			// SHOW THE FEATURED IMAGE
+
+			/**
+			 * Print custom column' value
+			 *
+			 * @since 1.0
+			 */
 			public function viewCountColumnContent($column_name, $postID) {
 				if ($column_name == $this->countSlug) {
 					echo get_post_meta($postID, $this->countKey, true) != '' ? get_post_meta($postID, $this->countKey, true) : '0';
@@ -135,7 +145,9 @@
 
 
 			/**
-			 * CUSTOMIZE COLUMN
+			 * Custom CSS for the column
+			 *
+			 * @since 1.0
 			 */
 			public function customizeColumn()
 			{
@@ -150,7 +162,9 @@
 
 
 			/**
-			 * SORTABLE VIEW COUNT
+			 * Set column sortable
+			 *
+			 * @since 1.0
 			 */
 			public function sortableViewCount($columns)
 			{
@@ -161,7 +175,9 @@
 
 
 			/**
-			 * SET SORT META DATA
+			 * Set custom meta key for sorting
+			 *
+			 * @since 1.0
 			 */
 			public function sortMetaKey($query)
 			{
@@ -177,7 +193,9 @@
 			}
 		}
 
-		// NEW INSTANCE
+		/**
+		 * Create new instance
+		 */
 		new MostReadPosts();
 
 	endif;
