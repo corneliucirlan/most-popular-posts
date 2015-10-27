@@ -3,7 +3,7 @@
 	/**
 	 * Most Popular Posts
 	 *
-	 * @version 1.0
+	 * @version 1.1
 	 * @author Corneliu Cirlan (cornel@twocsoft.com)
 	 * @link http://www.TwoCSoft.com/
 	 */
@@ -18,7 +18,8 @@
 			 * @var string
 			 * @since 1.0
 			 */
-			private $countKey = "view-count";
+			const COUNT_KEY = "view-count";
+			//private $countKey = "view-count";
 
 		
 			/**
@@ -27,7 +28,8 @@
 			 * @var string
 			 * @since 1.0
 			 */
-			private $countSlug = "view_count";
+			const COUNT_SLUG = "view_count";
+			//private $countSlug = "view_count";
 
 		
 			/**
@@ -45,9 +47,12 @@
 
 				// insert ajax callback
 				add_action('wp_head', array($this, 'ajaxCallback'));
+
+				// update post view via AJAX for logged in users
+				add_action('wp_ajax_'.self::COUNT_KEY, array($this, 'updateViewCount'));
 					
 				// update post view via AJAX only for non registered users
-				add_action('wp_ajax_nopriv_'.$this->countKey, array($this, 'updateViewCount'));
+				add_action('wp_ajax_nopriv_'.self::COUNT_KEY, array($this, 'updateViewCount'));
 
 				add_filter('manage_posts_columns', array($this, 'viewCountColumnHead'));
 				add_action('manage_posts_custom_column', array($this, 'viewCountColumnContent'), 10, 2);
@@ -68,14 +73,17 @@
 			 */
 			public function ajaxCallback()
 			{
+				// if user logged in and has administrative rights, exit
+				if (is_user_logged_in() && current_user_can('edit_posts')) return;
+
 				?>
 				<script type="text/javascript">
 					var ajaxurl = '<?php echo admin_url("admin-ajax.php"); ?>';
 					
 					jQuery(document).ready(function($) {
-						var postID = $('#<?php echo $this->countKey ?>').val();
+						var postID = $('#<?php echo self::COUNT_KEY ?>').val();
 
-						$.post(ajaxurl, {action: '<?php echo $this->countKey ?>', id: postID}, function(data, textStatus, xhr) {
+						$.post(ajaxurl, {action: '<?php echo self::COUNT_KEY ?>', id: postID}, function(data, textStatus, xhr) {
 							console.log(data);
 						});
 					});
@@ -91,19 +99,22 @@
 			 */
 			public function updateViewCount()
 			{
-				$postID = absint($_POST['id']);
+				// get post ID
+				$postID = intval($_POST['id']);
 				
-				$count = get_post_meta($postID, $this->countKey, true);
+				// update post key value
+				$count = get_post_meta($postID, self::COUNT_KEY, true);
 				if ($count == ''):
 						$count = 1;
-						delete_post_meta($postID, $this->countKey);
-						add_post_meta($postID, $this->countKey, $count);
+						delete_post_meta($postID, self::COUNT_KEY);
+						add_post_meta($postID, self::COUNT_KEY, $count);
 					else:
 						$count++;
-						update_post_meta($postID, $this->countKey, $count);
+						update_post_meta($postID, self::COUNT_KEY, $count);
 				endif;
 
-				die($postID);
+				// terminate
+				die("Key Updated");
 			}
 
 
@@ -114,8 +125,11 @@
 			 */
 			public function updateContent($content)
 			{
+				// if user logged in and has administrative rights, exit
+				if (is_user_logged_in() && current_user_can('edit_posts')) return $content;
+
 				if (is_singular('post'))
-					$content = '<input type="hidden" name="'.$this->countKey.'" id="'.$this->countKey.'" value="'.get_the_id().'" />'.$content;
+					$content = '<input type="hidden" name="'.self::COUNT_KEY.'" id="'.self::COUNT_KEY.'" value="'.get_the_id().'" />'.$content;
 
 				return $content;
 			}
@@ -127,7 +141,7 @@
 			 * @since 1.0
 			 */
 			public function viewCountColumnHead($defaults) {
-				$defaults[$this->countSlug] = __('Views');
+				$defaults[self::COUNT_SLUG] = __('Views');
 				return $defaults;
 			}
 
@@ -138,8 +152,8 @@
 			 * @since 1.0
 			 */
 			public function viewCountColumnContent($column_name, $postID) {
-				if ($column_name == $this->countSlug) {
-					echo get_post_meta($postID, $this->countKey, true) != '' ? get_post_meta($postID, $this->countKey, true) : '0';
+				if ($column_name == self::COUNT_SLUG) {
+					echo get_post_meta($postID, self::COUNT_KEY, true) != '' ? get_post_meta($postID, self::COUNT_KEY, true) : '0';
 				}
 			}
 
@@ -153,7 +167,8 @@
 			{
 				?>
 				<style type="text/css" media="screen">
-					.column-<?php echo $this->countSlug; ?> {
+					.column-<?php echo self::COUNT_SLUG; ?> {
+						width: 50px;
 						width: 5rem;
 					}
 				</style>
@@ -168,7 +183,7 @@
 			 */
 			public function sortableViewCount($columns)
 			{
-				$columns[$this->countSlug] = $this->countKey;
+				$columns[self::COUNT_SLUG] = self::COUNT_KEY;
 
 				return $columns;
 			}
@@ -186,8 +201,8 @@
 
 				$orderby = $query->get('orderby');
 
-				if ($this->countKey == $orderby):
-					$query->set('meta_key', $this->countKey);
+				if (self::COUNT_KEY == $orderby):
+					$query->set('meta_key', self::COUNT_KEY);
 					$query->set('orderby', 'meta_value_num');
 				endif;
 			}
