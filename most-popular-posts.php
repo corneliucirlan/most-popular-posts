@@ -15,21 +15,17 @@
 			/**
 			 * Post view key
 			 *
-			 * @var string
 			 * @since 1.0
 			 */
 			const COUNT_KEY = "view-count";
-			//private $countKey = "view-count";
 
 		
 			/**
 			 * Post view slug
 			 * 
-			 * @var string
 			 * @since 1.0
 			 */
 			const COUNT_SLUG = "view_count";
-			//private $countSlug = "view_count";
 
 		
 			/**
