@@ -4,8 +4,8 @@
 	 * Most Popular Posts
 	 *
 	 * @version 1.1
-	 * @author Corneliu Cirlan (cornel@twocsoft.com)
-	 * @link http://www.TwoCSoft.com/
+	 * @author Corneliu Cirlan (corneliu@corneliucirlan.com)
+	 * @link http://www.corneliucirlan.com/
 	 */
 
 	if (!class_exists("MostReadPosts")):
