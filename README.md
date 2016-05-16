@@ -10,5 +10,5 @@ Every time a post is loaded, an [AJAX](https://en.wikipedia.org/wiki/Ajax_(progr
 
 Just add a small snippet of code to your `functions.php` file
 ```php
-include_once('path/to/most-popular-posts.php');
+include_once('path/to/most-read-posts.php');
 ```
