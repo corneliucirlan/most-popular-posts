@@ -1,4 +1,4 @@
-# Most Popular Posts
+# Most Read Posts
 
 This class was designed to help [Wordpress](https://wordpress.org "Wordpress.org") site owners keep track of how many times their posts have been read. Thus, it will only add a custom column into the Posts admin page with the view count.
 
