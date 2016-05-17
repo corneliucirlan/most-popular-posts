@@ -70,12 +70,14 @@
 			        $postTypes = get_post_types(array('public' => true), 'names'); 
 					$settings = get_option('cc-mrp-settings')['cc-mrp-post-types'];
 					
-					foreach ($postTypes as $type):
-						if (in_array($type, $settings)):
-							add_filter('manage_'.$type.'_posts_columns', array($this, 'viewCountColumnHead'), 10);
-							add_action('manage_'.$type.'_posts_custom_column', array($this, 'viewCountColumnContent'), 10, 2);
-						endif;
-					endforeach;
+					if (is_array($settings)):
+						foreach ($postTypes as $type):
+							if (in_array($type, $settings)):
+								add_filter('manage_'.$type.'_posts_columns', array($this, 'viewCountColumnHead'), 10);
+								add_action('manage_'.$type.'_posts_custom_column', array($this, 'viewCountColumnContent'), 10, 2);
+							endif;
+						endforeach;
+					endif;
 				});
 				
 				// Customize the column
@@ -157,7 +159,7 @@
 				foreach ($postTypes as $key => $value):
 					?>
 					<label>
-						<input type="checkbox" name="cc-mrp-post-types[]" value="<?php echo $key ?>" <?php echo in_array($key, $settings) ? 'checked' : '' ?> />
+						<input type="checkbox" name="cc-mrp-post-types[]" value="<?php echo $key ?>" <?php echo is_array($settings) && in_array($key, $settings) ? 'checked' : '' ?> />
 						<?php echo $value->labels->name ?>
 					</label>&nbsp;&nbsp;&nbsp;
 					<?php
