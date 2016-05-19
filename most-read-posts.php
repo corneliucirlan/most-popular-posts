@@ -3,7 +3,7 @@
 	/**
 	 * Most Popular Posts
 	 *
-	 * @version 1.2
+	 * @version 1.3
 	 * @author Corneliu Cirlan (corneliu@corneliucirlan.com)
 	 * @link http://www.corneliucirlan.com/
 	 */
@@ -33,7 +33,39 @@
 			 *
 			 * @since 1.2
 			 */
-			const SETTINGS_SLUG = 'most-read-posts';
+			const CC_MRP_SLUG = 'most-read-posts';
+
+
+			/**
+			 * Settings group name
+			 *
+			 * @since 1.3
+			 */
+			const CC_MRP_GROUP = 'cc-mrp-group';
+
+
+			/**
+			 * Settings name
+			 *
+			 * @since 1.3
+			 */
+			const CC_MRP_SETTINGS = 'cc-mrp-settings';
+
+
+			/**
+			 * Settings general section
+			 *
+			 * @since 1.3
+			 */
+			const CC_MRP_SETTINGS_GENERAL = 'cc-mrp-general';
+
+
+			/**
+			 * Global settings
+			 *
+			 * @since 1.3
+			 */
+			private $settings;
 
 		
 			/**
@@ -43,6 +75,8 @@
 			 */
 			public function __construct()
 			{
+				// get plugin settings
+				$this->settings = get_option(self::CC_MRP_SETTINGS);
 
 				// Register plugin settings page
 				add_action('admin_menu', array($this, 'registerSettingsPage'));
@@ -68,7 +102,7 @@
 				// Enable views column on selected post types
 				add_action('wp_loaded', function(){
 			        $postTypes = get_post_types(array('public' => true), 'names'); 
-					$settings = get_option('cc-mrp-settings')['cc-mrp-post-types'];
+					$settings = get_option(self::CC_MRP_SETTINGS)['cc-mrp-post-types'];
 					
 					if (is_array($settings)):
 						foreach ($postTypes as $type):
@@ -97,13 +131,16 @@
 			public function registerSettings()
 			{
 				// register settings group
-				register_setting('cc-mrp-group', 'cc-mrp-settings', array($this, 'sanitizeSettings'));
+				register_setting(self::CC_MRP_GROUP, self::CC_MRP_SETTINGS, array($this, 'validateInput'));
 
 				// add settings section
-				add_settings_section('cc-mrp-general', __('General settings'), '', 'cc-mrp-group');
+				add_settings_section(self::CC_MRP_SETTINGS_GENERAL, __('General settings'), '', self::CC_MRP_GROUP);
 
 				// add settings field
-				add_settings_field('cc-mrp-post-types', __('Post types'), array($this, 'renderPostTypesField'), 'cc-mrp-group', 'cc-mrp-general');
+				add_settings_field('cc-mrp-post-types', __('Post types'), array($this, 'renderPostTypesField'), self::CC_MRP_GROUP, self::CC_MRP_SETTINGS_GENERAL);
+
+				// select roles to disable on
+				add_settings_field('cc-mrp-user-roles', __('Disable for'), array($this, 'renderUserRoles'), self::CC_MRP_GROUP, self::CC_MRP_SETTINGS_GENERAL);
 			}
 
 
@@ -114,7 +151,7 @@
 			 */
 			public function registerSettingsPage()
 			{
-				add_options_page(__('Most Read Posts'), __('Most Read Posts'), 'manage_options', self::SETTINGS_SLUG, array($this, 'renderSettingsPage'));
+				add_options_page(__('Most Read Posts'), __('Most Read Posts'), 'manage_options', self::CC_MRP_SLUG, array($this, 'renderSettingsPage'));
 			}
 
 
@@ -131,8 +168,8 @@
 
 					<form method='post' action='options.php'>
 
-						<?php settings_fields('cc-mrp-group'); ?>
-						<?php do_settings_sections('cc-mrp-group'); ?>
+						<?php settings_fields(self::CC_MRP_GROUP); ?>
+						<?php do_settings_sections(self::CC_MRP_GROUP); ?>
 
 						<!-- Submit button -->
 						<?php submit_button() ?>
@@ -154,7 +191,7 @@
 				$postTypes = get_post_types(array('public' => true), 'objects');
 				
 				// get checked post types
-				$settings = get_option('cc-mrp-settings')['cc-mrp-post-types'];
+				$settings = $this->settings['cc-mrp-post-types'];
 				
 				foreach ($postTypes as $key => $value):
 					?>
@@ -168,13 +205,42 @@
 
 
 			/**
+			 * Disable for this roles
+			 *
+			 * @since 1.3
+			 */
+			public function renderUserRoles()
+			{
+				// get all WP roles
+				$roles = get_editable_roles();
+
+				// get checked user roles
+				$settings = $this->settings['cc-mrp-user-roles'];
+
+				foreach ($roles as $key => $value):
+					?>
+					<label>
+						<input type="checkbox" name="cc-mrp-user-roles[]" value="<?php echo $key ?>" <?php echo is_array($settings) && in_array($key, $settings) ? 'checked' : '' ?> />
+						<?php echo $value['name'] ?>
+					</label>&nbsp;&nbsp;&nbsp;
+					<?php
+				endforeach;
+			}
+
+
+			/**
 			 * Sanitize settings
 			 *
 			 * @since 1.2
 			 */
-			public function sanitizeSettings($input)
+			public function validateInput($input)
 			{
+				// get post types
 				$input['cc-mrp-post-types'] = $_POST['cc-mrp-post-types'];
+				
+				// get user roles
+				$input['cc-mrp-user-roles'] = $_POST['cc-mrp-user-roles'];
+
 				return $input;
 			}
 
@@ -186,10 +252,25 @@
 			 */
 			public function ajaxCallback()
 			{
-				// if user logged in and has administrative rights, exit
-				if (is_user_logged_in() && current_user_can('edit_posts')) return;
+				// If user is looged in
+				if (is_user_logged_in()):
+					
+					// Get user roles
+					$userRoles = $this->settings['cc-mrp-user-roles'];
 
+					// Get post types
+					$postTypes = $this->settings['cc-mrp-post-types'];
+
+					// Get current user roles
+					$currentUser = wp_get_current_user();
+
+					// If user is on the disabled list, exit
+					foreach ($currentUser->roles as $userRole)
+						if (is_array($userRoles) && in_array($userRole, $userRoles))
+							return;
+				endif;
 				?>
+
 				<script type="text/javascript">
 					var ajaxurl = '<?php echo admin_url("admin-ajax.php"); ?>';
 					
@@ -238,10 +319,26 @@
 			 */
 			public function updateContent($content)
 			{
-				// if user logged in and has administrative rights, exit
-				if (is_user_logged_in() && current_user_can('edit_posts')) return $content;
+				// If user is looged in
+				if (is_user_logged_in()):
+					
+					// Get user roles
+					$userRoles = $this->settings['cc-mrp-user-roles'];
 
-				if (is_singular('post'))
+					// Get post types
+					$postTypes = $this->settings['cc-mrp-post-types'];
+
+					// Get current user roles
+					$currentUser = wp_get_current_user();
+
+					// If user is on the disabled list, exit
+					foreach ($currentUser->roles as $userRole)
+						if (is_array($userRoles) && in_array($userRole, $userRoles))
+							return $content;
+				endif;
+
+				// Check if single post and if checked to be monitored
+				if (is_singular() && is_array($postTypes) && in_array(get_post_type(), $postTypes))
 					$content = '<input type="hidden" name="'.self::COUNT_KEY.'" id="'.self::COUNT_KEY.'" value="'.get_the_id().'" />'.$content;
 
 				return $content;

@@ -1,5 +1,8 @@
 ## Changelog
 
+##### Version 1.3 (2015.05.19)
+- Added option to disable on selected user roles
+
 ##### Version 1.2 (2015.05.16)
 - Added settings page
 - Check what post types to monitor
