@@ -319,14 +319,15 @@
 			 */
 			public function updateContent($content)
 			{
+				// Get post types
+				$postTypes = $this->settings['cc-mrp-post-types'];
+
 				// If user is looged in
 				if (is_user_logged_in()):
 					
 					// Get user roles
 					$userRoles = $this->settings['cc-mrp-user-roles'];
 
-					// Get post types
-					$postTypes = $this->settings['cc-mrp-post-types'];
 
 					// Get current user roles
 					$currentUser = wp_get_current_user();
